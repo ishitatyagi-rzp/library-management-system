@@ -18,7 +18,12 @@ type Student struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
 	Phone    string `json:"phone" binding:"required,len=10,numeric"`
-	Password string `json:"-"` // hashed - hide sensitive info
+	Password string `json:"password" binding:"required"` // Allow binding for registration
+}
+
+type LoginInput struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
 }
 
 // Librarian model
@@ -26,7 +31,7 @@ type Librarian struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"-"`
+	Password string `json:"password" binding:"required"` // Allow binding for registration
 }
 
 // Book model
@@ -93,6 +98,27 @@ func RegisterStudent(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{"message": "Student registered successfully"})
 }
 
+// -------- REGISTER LIBRARIAN --------
+
+func RegisterLibrarian(c *gin.Context, db *sql.DB) {
+	var l Librarian
+	if err := c.ShouldBindJSON(&l); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	hashed, err := HashPassword(l.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+	_, err = db.Exec("INSERT INTO librarians (name, email, password) VALUES (?, ?, ?)", l.Name, l.Email, hashed)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register librarian"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Librarian registered successfully"})
+}
+
 // -------- CHECK PASSWORD HASH --------
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
@@ -101,29 +127,67 @@ func CheckPasswordHash(password, hash string) bool {
 
 // -------- LOGIN STUDENT --------
 func LoginStudent(c *gin.Context, db *sql.DB) {
-	var input Student
+	var input LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	var s Student
-
-	err := db.QueryRow("SELECT id, name, email, phone, password FROM student WHERE email=?", input.Email).
+	err := db.QueryRow("SELECT id, name, email, phone, password FROM students WHERE email=?", input.Email).
 		Scan(&s.ID, &s.Name, &s.Email, &s.Phone, &s.Password)
-
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Student not found"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	if !CheckPasswordHash(input.Password, s.Password) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "student": s})
+	// Don't return password in response
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"student": gin.H{
+			"id":    s.ID,
+			"name":  s.Name,
+			"email": s.Email,
+			"phone": s.Phone,
+		},
+	})
+}
 
+// -------- LOGIN LIBRARIAN --------
+func LoginLibrarian(c *gin.Context, db *sql.DB) {
+	var input LoginInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var l Librarian
+	err := db.QueryRow("SELECT id, name, email, password FROM librarians WHERE email=?", input.Email).
+		Scan(&l.ID, &l.Name, &l.Email, &l.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	if !CheckPasswordHash(input.Password, l.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	// Don't return password in response
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+		"librarian": gin.H{
+			"id":    l.ID,
+			"name":  l.Name,
+			"email": l.Email,
+		},
+	})
 }
 
 // -------- MAIN FUNCTION --------
@@ -134,6 +198,8 @@ func main() {
 	router := gin.Default()
 	router.POST("/students/register", func(c *gin.Context) { RegisterStudent(c, db) })
 	router.POST("/students/login", func(c *gin.Context) { LoginStudent(c, db) })
+	router.POST("/librarians/register", func(c *gin.Context) { RegisterLibrarian(c, db) })
+	router.POST("/librarians/login", func(c *gin.Context) { LoginLibrarian(c, db) })
 	router.Run(":8080")
 
 }
