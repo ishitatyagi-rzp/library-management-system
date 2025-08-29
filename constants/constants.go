@@ -28,31 +28,31 @@ const (
 	// Authentication and User Error Messages
 	// These messages handle user-related errors and authentication failures
 
-	HashPasswordError       = "Failed to hash password"
-	RegisterStudentError    = "Failed to register student"
-	RegisterLibrarianError  = "Failed to register librarian"
-	InvalidCredentialsError = "Invalid credentials"
-	StudentNotFoundError    = "Student not found"
+	HashPasswordError       = "failed to hash password"
+	RegisterStudentError    = "failed to register student"
+	RegisterLibrarianError  = "failed to register librarian"
+	InvalidCredentialsError = "invalid credentials"
+	StudentNotFoundError    = "student not found"
 
 	// Database Connection Error Messages
 	// These messages handle database connectivity issues
 
-	DatabaseConnectionError = "Failed to connect to database"
-	DatabaseOpenError       = "Failed to open database"
+	DatabaseConnectionError = "failed to connect to database"
+	DatabaseOpenError       = "failed to open database"
 
 	// Book Operation Error Messages
 	// These messages handle book-related business rule violations and errors
 
-	BookNotFoundError          = "Book not found"
-	BookNotAvailableError      = "Book is not available for borrowing"
-	BorrowBookError            = "Failed to borrow book"
-	BookAlreadyBorrowedError   = "Student has already borrowed this book"
-	AddBookError               = "Failed to add book"
-	UpdateBookError            = "Failed to update book"
-	DeleteBookError            = "Failed to delete book"
-	BookCurrentlyBorrowedError = "Cannot delete book that is currently borrowed"
-	ReturnBookError            = "Failed to return book"
-	BookNotBorrowedError       = "Book was not borrowed by this student"
+	BookNotFoundError          = "book not found"
+	BookNotAvailableError      = "book is not available for borrowing"
+	BorrowBookError            = "failed to borrow book"
+	BookAlreadyBorrowedError   = "student has already borrowed this book"
+	AddBookError               = "failed to add book"
+	UpdateBookError            = "failed to update book"
+	DeleteBookError            = "failed to delete book"
+	BookCurrentlyBorrowedError = "cannot delete book that is currently borrowed"
+	ReturnBookError            = "failed to return book"
+	BookNotBorrowedError       = "book was not borrowed by this student"
 
 	// Book Operation Success Messages
 	// These messages confirm successful book-related operations
@@ -64,6 +64,6 @@ const (
 	BookReturnedMessage = "Book returned successfully"
 
 	// Additional error constants used in handlers
-	FetchBooksError = "Failed to retrieve books"
-	FetchBookError  = "Failed to retrieve book"
+	FetchBooksError = "failed to retrieve books"
+	FetchBookError  = "failed to retrieve book"
 )
